@@ -22,8 +22,7 @@ python manage.py migrate
 Make sure to edit the files `oauth_settings_example.yml` as appropriate
 and rename it as `oauth_settings.yml` and adjust `settings.py`
 accordingly before running the code. Please see documentations on 
-(https://developer.microsoft.com/en-us/graph/get-started/python)[Microsoft
-Graph] for additional details.
+[Microsoft Graph](https://developer.microsoft.com/en-us/graph/get-started/python) for additional details.
 
 ```
 python manage.py runserver
