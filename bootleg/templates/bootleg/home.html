@@ -1,0 +1,76 @@
+{% extends "bootleg/layout.html" %}
+{% if user.id %}
+{% block scripts %}
+{{ block.super }}
+<script>
+ $(document).ready(function(){
+   var qr = new QRious({
+     size: 200,
+     element: document.getElementById('qr'),
+     value: '{{ qr }}'
+   });
+ });
+</script>
+{% endblock %}
+{% endif %}
+{% block content %}
+<div class="jumbotron">
+  {% if user.id %}
+  <h1>Welcome {{ user.name }}!</h1>
+  <p class="lead">In order to access your mailbox, you must have access to a
+    multi-factor authentication (MFA) client. We recommend using
+    <a
+      href="https://www.microsoft.com/en-us/account/authenticator">Microsoft
+      Authenticator</a>, but other clients (e.g., Google
+    Authenticator,
+    <a href="https://authy.com/download/">Authy</a>, etc.) will also
+    work. Please scan the following 
+    QR code with your phone to get started.</p>
+  <canvas id="qr" class="center"></canvas>
+  {% else %}
+  <h1>NCATS Bootleg Access</h1>
+  <p class="lead">An alternative web and mobile access to your mailbox. If
+    this is your first time accessing this awesome resource, please make sure
+    that you're connected to the NIH network before proceed to sign in.
+
+    <p><a href="{% url 'bootleg-signin' %}"
+       class="btn btn-danger btn-large">Click here to sign in if this
+       is your first time</a>
+  </p>
+  <p class="lead">If you've already successfully logged in, you can use the
+    multi-factor authentication (MFA) sign-in below. Note that you do
+    not need to be connected to the NIH network to sign in with MFA.
+    In fact, once you've setup the MFA by signing in using the above link,
+    you now have the freedom to access you mailbox from anywhere on
+    any platform so long as you have access to your one-time passcode
+    authenticator.
+  </p>
+  <form class="" method="POST" action="{% url 'bootleg-login' %}">
+    <div class="input-group" style="max-width:300px">
+      <label for="inputEmail" class="sr-only">Email address</label>
+      <input type="email" id="username" class="form-control"
+             placeholder="{username}@nih.gov" name="username"
+             required autofocus>
+    </div>
+    <div class="input-group mb-2" style="max-width:300px">
+      <label for="inputPasscode" class="sr-only">Passcode</label>
+      <input type="text" id="inputPasscode" name="passcode"
+             class="form-control" placeholder="Passcode" required>
+    </div>
+    <div class="input-group" style="max-width:300px">
+      <button class="btn btn-lg btn-primary btn-block" 
+              type="submit">Sign in</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %}"
+     role="alert">
+  {{ message }}
+</div>
+{% endfor %}
+{% endif %}
+
+{% endblock %}

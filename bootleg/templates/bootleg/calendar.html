@@ -1,0 +1,26 @@
+{% extends "bootleg/layout.html" %}
+{% block content %}
+<h1>Calendar</h1>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Organizer</th>
+      <th scope="col">Subject</th>
+      <th scope="col">Start</th>
+      <th scope="col">End</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% if events %}
+    {% for event in events %}
+    <tr>
+      <td>{{ event.organizer.emailAddress.name }}</td>
+      <td><a href="">{{ event.subject }}</a></td>
+      <td>{{ event.start.dateTime|date:'D d M, Y, f A e' }}</td>
+      <td>{{ event.end.dateTime|date:'D d M, Y, f A e' }}</td>
+    </tr>
+    {% endfor %}
+    {% endif %}
+  </tbody>
+</table>
+{% endblock %}

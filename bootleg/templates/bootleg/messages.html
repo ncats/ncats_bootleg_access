@@ -1,0 +1,64 @@
+{% extends "bootleg/layout.html" %}
+{% block content %}
+<div class="alert alert-info" role="alert">
+  <h4 class="alert-heading">Messages
+    <span class="badge badge-pill badge-light">{{ count }}</span></h4>
+  <div class="input-group mb-3">        
+    <input type="text" class="form-control" placeholder="Search"
+           aria-label="Search" aria-describedby="basic-addon2">
+    <div class="input-group-append">
+      <button class="btn btn-outline-secondary" type="button">Search</button>
+    </div>      
+  </div>
+
+</div>
+{% if messages %}
+<nav aria-label="Page navigation example">
+  <ul class="pagination">
+    <li class="page-item">
+      <a class="page-link" href="{% url 'bootleg-messages' %}">Latest</a>
+    </li>    
+    <li class="page-item {% if skip <= 0 %}disabled{% endif %}">
+      <a class="page-link" href="{{ prevpage }}">Newer</a>
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="{{ nextpage }}">Older</a>
+    </li>
+  </ul>
+</nav>
+{% for m in messages %}
+<div class="card {% if m.importance == 'high' %}border-danger{% else %}border-dark{% endif %} mb-3" style="margin-bottom:10px">
+  <div class="card-header">
+    <strong data-toggle="tooltip"
+            title="{{ m.from.emailAddress.address }}">
+      {{ m.from.emailAddress.name }}</strong>
+    <p><em>{{ m.receivedDateTime|date:'f A e D d M Y' }}</em></p>
+  </div>
+  <div class="card-body text-dark">
+    <h5 class="card-title">
+      <a href="{% url 'bootleg-message' id=m.id %}">{{ m.subject }}</a></h5>
+    <p class="card-text">{{ m.bodyPreview }}</p>
+  </div>
+  <div class="card-footer">
+    {% if m.hasAttachments %}
+    <span style="margin-right:5px" data-toggle="tooltip"
+          data-placement="right" title="Message has attachments">
+      <i class="fas fa-paperclip"></i>
+    </span>
+    {% endif %}
+    <a class="btn btn-outline-primary" href="{% url 'bootleg-reply' id=m.id %}"
+      data-toggle="tooltip"
+      title="Reply to {{ m.from.emailAddress.address }}">
+      <i class="fas fa-reply"></i></a>
+    <a class="btn btn-outline-primary"
+       href="{% url 'bootleg-reply' id=m.id %}?all=yes"
+       data-toggle="tooltip" title="Reply All">
+      <i class="fas fa-reply-all"></i></a>
+    <button class="btn btn-outline-primary" data-mesg="{{ m.id }}"
+            data-toggle="tooltip" title="Forward">
+      <i class="fas fa-arrow-right"></i></button>
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

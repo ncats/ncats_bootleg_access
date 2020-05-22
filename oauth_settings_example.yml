@@ -1,0 +1,11 @@
+#
+# this is an example setting. please rename this file as oauth_settings.yml
+# with the appropriate values set.
+#
+app_id: "{APP_ID}"
+app_secret: "{APP_SECRET}"
+redirect: "http://localhost:8000/callback"
+scopes: "openid profile offline_access user.read calendars.read mail.read"
+authority: "https://login.microsoftonline.com/{TENANT_ID}"
+authorize_endpoint: "/oauth2/v2.0/authorize"
+token_endpoint: "/oauth2/v2.0/token"

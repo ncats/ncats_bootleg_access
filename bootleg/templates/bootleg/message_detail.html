@@ -1,0 +1,59 @@
+{% extends "bootleg/layout.html" %}
+{% block content %}
+<div class="card" style="margin-bottom:10px">
+  <div class="card-header">
+    <a href="{% url 'bootleg-reply' id=mesg.id %}"
+       class="btn btn-outline-primary" data-mesg="{{ mesg.id }}"
+      data-toggle="tooltip" data-placement="bottom"
+      title="Reply to {{ mesg.from.emailAddress.address }}">
+      <i class="fas fa-reply"></i> Reply</a>
+    <a class="btn btn-outline-primary"
+       href="{% url 'bootleg-reply' id=mesg.id %}?all=yes"
+       data-toggle="tooltip" title="Reply All">
+      <i class="fas fa-reply-all"></i> Reply All</a>
+    <button class="btn btn-outline-primary" data-mesg="{{ mesg.id }}"
+            data-toggle="tooltip" data-placement="bottom" title="Forward">
+      <i class="fas fa-arrow-right"></i> Forward</button>
+  </div>  
+  <div class="card-body">
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item">
+        <span class="badge badge-pill badge-secondary">
+          From</span>
+        <a href="" data-toggle="tooltip"
+          title="{{ mesg.from.emailAddress.address }}">
+          {{ mesg.from.emailAddress.name }}
+        </a>
+      </li>
+      <li class="list-group-item" style="max-height:10em; overflow-y:auto">
+        <span class="badge badge-pill badge-secondary">To</span>
+        {% for r in mesg.toRecipients %}
+        <a href="" class="badge badge-light">{{ r.emailAddress.name }}</a>
+        {% endfor %}
+      </li>
+      {% if mesg.ccRecipients %}
+      <li class="list-group-item" style="max-height:10em; overflow-y:auto">
+        <span class="badge badge-pill badge-secondary">Cc</span>
+        {% for r in mesg.ccRecipients %}
+        <a href="" class="badge badge-light">{{ r.emailAddress.name }}</a>
+        {% endfor %}
+      </li>
+      {% endif %}
+    </ul>
+    <p>
+    <h4 class="card-title">{{ mesg.subject }}</h4>
+    <span class="ml-auto"><em>{{ mesg.receivedDateTime|date:'f A e D d M Y' }}</em></span>
+    <hr>
+    {% if mesg.body.contentType == 'html' %}
+    <div class="embed-responsive" style="width:100%; height:500px">
+      <iframe class="embed-reponsive-item" allow
+              src="{% url 'bootleg-message-body' id=mesg.id %}"</iframe>
+    </div>
+      {% else %}
+    <textarea class="form-control"
+              style="width:100%; height:300px; font-family:monospace"
+              readonly>{{ mesg.body.content }}</textarea>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
