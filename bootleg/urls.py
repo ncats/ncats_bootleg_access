@@ -18,6 +18,8 @@ urlpatterns = [
     path(r'messages/<id>/body', views.message_body,
          name='bootleg-message-body'),
     path(r'messages', views.messages, name='bootleg-messages'),
-    path(r'reply/<id>', views.reply, name='bootleg-reply'),
-    path(r'reply/<id>/send', views.reply_send, name='bootleg-reply-send'),
+    path(r'messages/<id>/<type>', views.message_send,
+         name='bootleg-message-send'),
+    path(r'send/<id>/message', views.send_message,
+         name='bootleg-send-message'),
 ]

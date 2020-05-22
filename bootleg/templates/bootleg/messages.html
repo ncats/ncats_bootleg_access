@@ -46,17 +46,19 @@
       <i class="fas fa-paperclip"></i>
     </span>
     {% endif %}
-    <a class="btn btn-outline-primary" href="{% url 'bootleg-reply' id=m.id %}"
+    <a class="btn btn-outline-primary"
+       href="{% url 'bootleg-message-send' id=m.id type='reply' %}"
       data-toggle="tooltip"
       title="Reply to {{ m.from.emailAddress.address }}">
       <i class="fas fa-reply"></i></a>
     <a class="btn btn-outline-primary"
-       href="{% url 'bootleg-reply' id=m.id %}?all=yes"
+       href="{% url 'bootleg-message-send' id=m.id type='replyAll' %}"
        data-toggle="tooltip" title="Reply All">
       <i class="fas fa-reply-all"></i></a>
-    <button class="btn btn-outline-primary" data-mesg="{{ m.id }}"
-            data-toggle="tooltip" title="Forward">
-      <i class="fas fa-arrow-right"></i></button>
+    <a class="btn btn-outline-primary" 
+       href="{%url 'bootleg-message-send' id=m.id type='forward' %}"
+       data-toggle="tooltip" title="Forward message">
+      <i class="fas fa-arrow-right"></i></a>
   </div>
 </div>
 {% endfor %}

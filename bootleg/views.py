@@ -228,6 +228,9 @@ def message(request, id):
             mesg['receivedDateTime'] = dateutil.parser.isoparse(
                 mesg['receivedDateTime'])
         context['mesg'] = mesg
+        if mesg['body']['contentType'] != 'html':
+            mesg['body']['content_formatted'] = '<br>'.join(
+                mesg['body']['content'].splitlines())
         
         return render(request, 'bootleg/message_detail.html', context)
     return validate_request(request, show_message, id=id)
@@ -275,42 +278,84 @@ def bootleg_login(request):
         traceback.print_exc(file=sys.stderr)
     return HttpResponseRedirect(reverse('bootleg-home'))        
 
-def reply(request, id):
-    def show_reply(request, token, context, id):
+@csrf_exempt
+def message_send(request, id, type):
+    def show_reply(request, token, context, id, type):
         mesg = get_message(token, id)
         if mesg:
             mesg['receivedDateTime'] = dateutil.parser.isoparse(
                 mesg['receivedDateTime'])
-            subject = mesg['subject']
-            if subject.find('Re:') >= 0 or subject.find('re:') >= 0:
-                pass
-            else:
-                mesg['subject'] = 'Re: '+subject
 
-            recipients = '%s <%s>; ' % (mesg['from']['emailAddress']['name'],
-                                        mesg['from']['emailAddress']['address'])
+            email = mesg['from']['emailAddress']['address']
+            recipients = '%s <%s>' % (
+                mesg['from']['emailAddress']['name'], email)
+            unique = set(email)
+
             cc = ''
-            if 'all' in request.GET and request.GET['all']:
-                recipients += ' ;'.join(['%s <%s>' % (
-                    x['emailAddress']['name'], x['emailAddress']['address'])
-                                        for x in mesg['toRecipients']])
-                cc += '; '.join(['%s <%s>' % (
-                    x['emailAddress']['name'], x['emailAddress']['address'])
-                                        for x in mesg['ccRecipients']])
+            if type == 'replyAll':
+                for m in mesg['toRecipients']:
+                    email = m['emailAddress']['address']
+                    if email not in unique:
+                        recipients += '; %s <%s>' % (
+                            m['emailAddress']['name'], email)
+                        unique.add(email)
+                for m in mesg['ccRecipients']:
+                    email = m['emailAddress']['address']
+                    if email not in unique:
+                        if len(cc) > 0:
+                            cc += '; '
+                        cc += '%s <%s>' % (
+                            m['emailAddress']['name'], email)
+                        unique.add(email)
+            elif type == 'reply':
+                pass
+            elif type == 'forward':
+                recipients = ''
+            else:
+                logger.warning('Unknown send type: %s' % type)
+                type = 'reply'
+                        
+            subject = mesg['subject']                    
+            if type == 'forward':
+                if subject.find('Fwd:') >= 0 or subject.find('FW:') >= 0:
+                    pass
+                else:
+                    mesg['subject'] = 'Fwd: '+subject.replace(
+                        'Re:', '').replace('RE:', '')
+            else:
+                if subject.find('Re:') >= 0 or subject.find('RE:') >= 0:
+                    pass
+                else:
+                    mesg['subject'] = 'Re: '+subject
+
+            context['sendtype'] = type                    
             context['torecipients'] = recipients
             context['ccrecipients'] = cc
-            
             context['mesg'] = mesg
         return render(request, 'bootleg/edit.html', context)
-    return validate_request(request, show_reply, id=id)
+    
+    return validate_request(request, show_reply, id=id, type=type)
 
 def parse_email_addresses(str):
     import re
-    return [ {'emailAddress': { 'address': x }}
-             for x in re.findall('[^<\s,;]+@[^>\s,;]+', str)]
+    addresses = []
+    for s in str.split(';'):
+        if len(s) > 0:
+            m = re.search('([^<\s;]+@[^>\s;]+)', s)
+            if m:
+                email = m.group(1)
+                name = s.replace(email, '').replace('<>', '').strip()
+                addresses.append({'emailAddress': {
+                    'address': email,
+                    'name': name
+                }})
+            else:
+                logger.warning("Can't parse token '%s'" % s)
+                
+    return addresses
 
 @csrf_exempt
-def reply_send(request, id):
+def send_message(request, id):
     context = initialize_context(request)
     if not context['user']['id']:
         return HttpResponseRedirect(reverse('bootleg-home'))
@@ -321,16 +366,19 @@ def reply_send(request, id):
         # the send
         logger.debug('%s: payload... %s' % (request.path, request.body))
         data = json.loads(request.body)
+        comment = data['comment']
+        if data['contenttype'] == 'html':
+            comment = '<p>' + '<br>'.join(comment.splitlines())
         mesg = {
             'message': {
                 'toRecipients': parse_email_addresses (data['to']),
                 'ccRecipients': parse_email_addresses (data['cc']),
                 'subject': data['subject']
             },
-            'comment': data['comment']
+            'comment': comment
         }
         logger.debug('sending...\n' + json.dumps(mesg, indent=2))
-        r = reply_message(token, id, mesg)
+        r = deliver_message(token, id, mesg, data['sendtype'])
         logger.debug('status => %d' % r.status_code)
         return HttpResponse('', status=r.status_code)
     except:

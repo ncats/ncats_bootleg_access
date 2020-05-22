@@ -47,10 +47,10 @@ def get_message(token, id):
     graph_client = OAuth2Session(token=token)
     return graph_client.get('%s/me/messages/%s' % (graph_url, id)).json()
 
-def reply_message(token, id, mesg):
+def deliver_message(token, id, mesg, type='reply'):
     graph_client = OAuth2Session(token=token)
     r = graph_client.post(
-        '%s/me/messages/%s/reply' % (graph_url, id),
+        '%s/me/messages/%s/%s' % (graph_url, id, type),
         json=mesg, timeout=TIMEOUT
     )
     return r

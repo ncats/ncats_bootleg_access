@@ -9,11 +9,13 @@
  });
  
  function send_message () {
-   console.log('replying to message...');
    var text = $('#editor').val();
+   console.log('replying to message..."'+text+'"');
    var mesg = {
      to: $('#to-field').val(),
      cc: $('#cc-field').val(),
+     sendtype: $('#send-message').data('sendtype'),
+     contenttype: '{{ mesg.body.contentType }}',
      subject: $('#subject-field').val(),
      comment: text
    };
@@ -23,7 +25,7 @@
      .html('<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>');
    
    $.ajax({
-     url: "{% url 'bootleg-reply-send' id=mesg.id %}",
+     url: "{% url 'bootleg-send-message' id=mesg.id %}",
      dataType: "json",
      method: "POST",
      data: JSON.stringify(mesg),
@@ -54,7 +56,7 @@
         <tr>
           <td>
             <button class="btn btn-outline-primary" id="send-message"
-            >
+                    data-sendtype="{{ sendtype }}">
               <i class="fas fa-paper-plane"></i> Send</button>
           </td>
           <td>
@@ -74,7 +76,7 @@
       </div>
       <input type="text" class="form-control" id="to-field"
              value="{{ torecipients }}" data-toggle="tooltip"
-             title="Enter space or comma-delimited recipients"
+             title="Enter semicolon-delimited recipients"
              aria-label="from" aria-describedby="to" required>
       <!-- 
       <div class="input-group-append">
@@ -90,7 +92,7 @@
       </div>
       <input type="text" class="form-control" id="cc-field"
              data-toggle="tooltip" value="{{ ccrecipients }}"
-             title="Enter space or comma-delimited recipients"
+             title="Enter semicolon-delimited recipients"
              aria-label="from" aria-describedby="cc">
       <!--
       <div class="input-group-append">
@@ -116,7 +118,11 @@
 </div>
 <div class="card" style="margin-bottom:10px">
   <div class="card-header">
-    <h5 class="card-title">Replying to message...</h5>
+    {% if sendtype == 'forward' %}
+    <h5 class="card-title">Forwarding the following message...</h5>
+    {% else %}
+    <h5 class="card-title">Replying to the following message...</h5>
+    {% endif %}
   </div>
   <div class="card-body">
     <div class="embed-responsive" style="width:100%; height:300px">

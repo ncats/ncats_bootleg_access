@@ -2,18 +2,19 @@
 {% block content %}
 <div class="card" style="margin-bottom:10px">
   <div class="card-header">
-    <a href="{% url 'bootleg-reply' id=mesg.id %}"
+    <a href="{% url 'bootleg-message-send' id=mesg.id type='reply' %}"
        class="btn btn-outline-primary" data-mesg="{{ mesg.id }}"
       data-toggle="tooltip" data-placement="bottom"
       title="Reply to {{ mesg.from.emailAddress.address }}">
       <i class="fas fa-reply"></i> Reply</a>
     <a class="btn btn-outline-primary"
-       href="{% url 'bootleg-reply' id=mesg.id %}?all=yes"
+       href="{% url 'bootleg-message-send' id=mesg.id type='replyAll' %}"
        data-toggle="tooltip" title="Reply All">
       <i class="fas fa-reply-all"></i> Reply All</a>
-    <button class="btn btn-outline-primary" data-mesg="{{ mesg.id }}"
-            data-toggle="tooltip" data-placement="bottom" title="Forward">
-      <i class="fas fa-arrow-right"></i> Forward</button>
+    <a class="btn btn-outline-primary"
+       href="{% url 'bootleg-message-send' id=mesg.id type='forward' %}"
+       data-toggle="tooltip" data-placement="bottom" title="Forward">
+      <i class="fas fa-arrow-right"></i> Forward</a>
   </div>  
   <div class="card-body">
     <ul class="list-group list-group-flush">
@@ -50,9 +51,9 @@
               src="{% url 'bootleg-message-body' id=mesg.id %}"</iframe>
     </div>
       {% else %}
-    <textarea class="form-control"
-              style="width:100%; height:300px; font-family:monospace"
-              readonly>{{ mesg.body.content }}</textarea>
+    <div style="width:100%; max-height:500px; font-family:monospace; overflow-y:auto">
+      {{ mesg.body.content_formatted|safe|urlize }}
+    </div>
     {% endif %}
   </div>
 </div>
