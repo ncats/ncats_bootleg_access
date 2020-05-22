@@ -290,7 +290,7 @@ def reply(request, id):
             recipients = '%s <%s>; ' % (mesg['from']['emailAddress']['name'],
                                         mesg['from']['emailAddress']['address'])
             cc = ''
-            if request.GET['all']:
+            if 'all' in request.GET and request.GET['all']:
                 recipients += ' ;'.join(['%s <%s>' % (
                     x['emailAddress']['name'], x['emailAddress']['address'])
                                         for x in mesg['toRecipients']])
