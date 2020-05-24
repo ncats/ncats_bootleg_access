@@ -1,0 +1,78 @@
+{% extends "bootleg/layout.html" %}
+{% block scripts %}
+{{ block.super }}
+<script>
+  $(document).ready(function() {
+    $('#search-alert').on('close.bs.alert', function(){
+      window.location.href = "{%url 'bootleg-messages' %}";
+    });
+  });
+</script>
+{% endblock %}
+{% block content %}
+<div class="alert alert-success alert-dismissible fade show" role="alert"
+     id="search-alert">
+  <h4 class="alert-heading">Search results for <code>{{ search_term }}</code>...
+    <span class="badge badge-pill badge-light">{{ count }}</span></h4>
+  <button type="button" class="close" id="search-close"
+          data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{% if messages %}
+<nav aria-label="Page navigation example">
+  <ul class="pagination">
+    {% if nextpage %}
+    <li class="page-item">
+      <a class="page-link" href="{{ nextpage }}">Next</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% for m in messages %}
+<div class="card {% if m.importance == 'high' %}border-danger{% else %}border-dark{% endif %} mb-3" style="margin-bottom:10px">
+  <div class="card-header">
+    <strong data-toggle="tooltip"
+            title="{{ m.from.emailAddress.address }}">
+      {{ m.from.emailAddress.name }}</strong>
+    <p><em>{{ m.receivedDateTime|date:'D d M Y' }} at {{ m.receivedDateTime|date:'f A e' }}</em></p>
+  </div>
+  <div class="card-body text-dark">
+    <h5 class="card-title">
+      <a href="{% url 'bootleg-message' id=m.id %}">{{ m.subject }}</a></h5>
+    <p class="card-text">{{ m.bodyPreview }}</p>
+  </div>
+  <div class="card-footer">
+    {% if m.hasAttachments %}
+    <span style="margin-right:5px" data-toggle="tooltip"
+          data-placement="right" title="Message has attachments">
+      <i class="fas fa-paperclip"></i>
+    </span>
+    {% endif %}
+    <a class="btn btn-outline-primary"
+       href="{% url 'bootleg-message-send' id=m.id type='reply' %}"
+       data-toggle="tooltip"
+       title="Reply to {{ m.from.emailAddress.address }}">
+      <i class="fas fa-reply"></i></a>
+    <a class="btn btn-outline-primary"
+       href="{% url 'bootleg-message-send' id=m.id type='replyAll' %}"
+       data-toggle="tooltip" title="Reply All">
+      <i class="fas fa-reply-all"></i></a>
+    <a class="btn btn-outline-primary" 
+       href="{%url 'bootleg-message-send' id=m.id type='forward' %}"
+       data-toggle="tooltip" title="Forward message">
+      <i class="fas fa-arrow-right"></i></a>
+  </div>
+</div>
+{% endfor %}
+<nav aria-label="Page navigation example">
+  <ul class="pagination">
+    {% if nextpage %}
+    <li class="page-item">
+      <a class="page-link" href="{{ nextpage }}">Next</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

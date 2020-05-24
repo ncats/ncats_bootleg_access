@@ -1,0 +1,101 @@
+{% extends "bootleg/layout.html" %}
+{% block scripts %}
+{{ block.super }}
+<script>
+ $(document).ready(function() {
+   $('#send-message').on('click', function(){
+     send_message();
+   });
+ });
+ 
+ function send_message () {
+   var text = $('#editor').val();
+   var mesg = {
+     to: $('#to-field').val(),
+     cc: $('#cc-field').val(),
+     subject: $('#subject-field').val(),
+     contenttype: 'text',
+     comment: text
+   };
+
+   $('#progressbar')
+     .addClass('progress')
+     .html('<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>');
+   
+   $.ajax({
+     url: "{% url 'bootleg-api-message-new' %}",
+     dataType: "json",
+     method: "POST",
+     data: JSON.stringify(mesg),
+     error: function(xhr, status, error){
+       if (xhr.status == 202) {
+         console.log('Send SUCCESS!');
+         window.location.href = "{% url 'bootleg-messages' %}";
+       }
+       else {
+         console.log('Send FAILED: ' + xhr.status+' '+error);
+         $('#message')
+           .addClass('alert alert-warning alert-dismissible fade show')
+           .html('Unable to send message!');
+       }
+     }
+   }).always(function (){
+     $('#progressbar').removeClass('progress').html('');
+   });
+ }
+</script>
+{% endblock %}
+{% block content %}
+<div id="message" role="alert"></div>
+<div class="card" style="margin-bottom:10px">
+  <div class="card-header">
+    <table>
+      <tbody>
+        <tr>
+          <td>
+            <button class="btn btn-outline-primary" id="send-message"
+                    data-sendtype="{{ sendtype }}">
+              <i class="fas fa-paper-plane"></i> Send</button>
+          </td>
+          <td>
+            <a href="{% url 'bootleg-messages' %}"
+               class="btn btn-outline-danger" >
+              <i class="fas fa-window-close"></i> Cancel</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body">
+    <div id="progressbar"></div>    
+    <div class="input-group mb-2">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="to">To</span>
+      </div>
+      <input type="text" class="form-control" id="to-field"
+             {% if recipients %}value="{{ recipients }}"{% endif %}
+             aria-label="from" aria-describedby="to" required>
+    </div>
+    <div class="input-group mb-2">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="cc">Cc</span>
+      </div>
+      <input type="text" class="form-control" id="cc-field"
+             data-toggle="tooltip"
+             aria-label="from" aria-describedby="cc">
+    </div>
+    <div class="input-group mb-2">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="subject">Subject</span>
+      </div>
+      <input type="text" class="form-control" id="subject-field"
+             value="{{ subject }}"
+             aria-label="from" aria-describedby="subject">      
+    </div>
+    <div class="input-group">
+      <textarea class="form-control" id="editor"
+                style="width:100%; height:200px; font-family:monospace"></textarea>
+    </div>
+  </div>
+</div>
+{% endblock %}
