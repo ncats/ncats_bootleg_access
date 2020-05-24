@@ -78,6 +78,14 @@
         {% endfor %}
       </li>
       {% endif %}
+      {% if attachments %}
+      <li class="list-group-item" style="max-height:10em; overflow-y:auto">
+          <i class="fas fa-paperclip"></i>
+        {% for att in attachments %}
+        <a target="_blank" href="{% url 'bootleg-api-message-attachment' id=mesg.id attachment_id=att.id %}">{{ att.name }}</a>
+        {% endfor %}
+      </li>
+      {% endif %}
     </ul>
     <p>
     <h4 class="card-title">{{ mesg.subject }}</h4>

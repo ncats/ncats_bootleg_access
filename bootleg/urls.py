@@ -27,4 +27,7 @@ urlpatterns = [
          name='bootleg-api-message-new'),
     path(r'api/messages/<id>', views.api_message,
          name='bootleg-api-message'),
+    path(r'api/messages/<id>/attachment/<attachment_id>',
+         views.api_message_attachment_content,
+         name='bootleg-api-message-attachment'),
 ]

@@ -256,6 +256,10 @@ def message(request, id):
         if mesg['body']['contentType'] != 'html':
             mesg['body']['content_formatted'] = '<br>'.join(
                 mesg['body']['content'].splitlines())
+        # now check for attachments
+        if 'hasAttachments' in mesg and mesg['hasAttachments']:
+            context['attachments'] = get_message_attachments(
+                token, id, {'$select': 'id,contentType,name'})['value']
         
         return render(request, 'bootleg/message_detail.html', context)
     return validate_request(request, show_message, id=id)
@@ -276,6 +280,15 @@ def message_body(request, id):
                 
     return validate_request(request, show_message_body, id=id)
 
+def api_message_attachment_content(request, id, attachment_id):
+    def show_message_attachment_content(request, token,
+                                        context, id, attachment_id):
+        r = get_message_attachment_content(token, id, attachment_id)
+        return HttpResponse(r.content, content_type=r.headers['content-type'],
+                            status=r.status_code)
+    return validate_request(request, show_message_attachment_content, id=id,
+                            attachment_id = attachment_id)
+            
 @csrf_exempt
 def bootleg_login(request):
     if request.method != 'POST':

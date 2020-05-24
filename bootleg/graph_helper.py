@@ -43,9 +43,10 @@ def get_message_count(token):
     graph_client = OAuth2Session(token=token)
     return graph_client.get('%s/me/messages/$count' % graph_url).json()
 
-def get_message(token, id):
+def get_message(token, id, query_params = None):
     graph_client = OAuth2Session(token=token)
-    return graph_client.get('%s/me/messages/%s' % (graph_url, id)).json()
+    return graph_client.get('%s/me/messages/%s' % (
+        graph_url, id), params=query_params).json()
 
 def deliver_message(token, id, mesg, type='reply'):
     graph_client = OAuth2Session(token=token)
@@ -87,3 +88,13 @@ def get_people(token, query=None, skip=0, top=10):
         query_params['$search'] = '"%s"' % query
     return graph_client.get('%s/me/people'
                             % graph_url, params=query_params).json()
+
+def get_message_attachments(token, id, query_params):
+    graph_client = OAuth2Session(token=token)
+    return graph_client.get('%s/me/messages/%s/attachments'
+                            % (graph_url, id), params=query_params).json()
+
+def get_message_attachment_content(token, id, attachment_id):
+    graph_client = OAuth2Session(token=token)
+    return graph_client.get('%s/me/messages/%s/attachments/%s/$value'
+                            % (graph_url, id, attachment_id))
