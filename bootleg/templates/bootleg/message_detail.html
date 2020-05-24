@@ -1,58 +1,97 @@
 {% extends "bootleg/layout.html" %}
+{% block scripts %}
+{{ block.super }}
+<script>
+ $(document).ready(function() {
+   $('#delete-message').on('click', function(){
+     delete_message();
+   });
+ });
+
+ function delete_message () {
+   console.log('deleting message...');
+
+   $('#progressbar')
+     .addClass('progress')
+     .html('<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>');
+   
+   $.ajax({
+     url: "{% url 'bootleg-api-message' id=mesg.id %}",
+     method: "DELETE",
+     success: function(xhr, status, error){
+       console.log('Delete SUCCESS!');
+       window.location.href = "{% url 'bootleg-messages' %}";
+     },
+     error: function(xhr, status, error) {
+       console.log('DELETE: code='+xhr.status+' status='+status
+                  +' error='+error);
+       $('#message').addClass('alert alert-warning fade show')
+                    .html('Unable to delete message!');
+     }
+   }).always(function (){
+     $('#progressbar').removeClass('progress').html('');
+   });
+ }
+</script>
+{% endblock %}
 {% block content %}
+<div id="message" role="alert"></div>
 <div class="card" style="margin-bottom:10px">
-  <div class="card-header">
+  <div class="card-header d-flex">
     <a href="{% url 'bootleg-message-send' id=mesg.id type='reply' %}"
        class="btn btn-outline-primary" data-mesg="{{ mesg.id }}"
-      data-toggle="tooltip" data-placement="bottom"
-      title="Reply to {{ mesg.from.emailAddress.address }}">
-      <i class="fas fa-reply"></i> Reply</a>
+       data-toggle="tooltip" data-placement="bottom"
+       title="Reply to {{ mesg.from.emailAddress.address }}">
+      <i class="fas fa-reply"></i></a>&nbsp;
     <a class="btn btn-outline-primary"
        href="{% url 'bootleg-message-send' id=mesg.id type='replyAll' %}"
-       data-toggle="tooltip" title="Reply All">
-      <i class="fas fa-reply-all"></i> Reply All</a>
+       data-toggle="tooltip" data-placement="bottom" title="Reply All">
+      <i class="fas fa-reply-all"></i></a>&nbsp;
     <a class="btn btn-outline-primary"
        href="{% url 'bootleg-message-send' id=mesg.id type='forward' %}"
-       data-toggle="tooltip" data-placement="bottom" title="Forward">
-      <i class="fas fa-arrow-right"></i> Forward</a>
+       data-toggle="tooltip" data-placement="bottom" title="Forward message">
+      <i class="fas fa-arrow-right"></i></a>&nbsp;
+    <button class="btn btn-outline-danger ml-auto" id="delete-message"
+            data-toggle="tooltip" data-placement="bottom"
+            title="Delete message">
+      <i class="fas fa-trash"></i></button>
   </div>  
   <div class="card-body">
+    <div id="progressbar"></div>
     <ul class="list-group list-group-flush">
       <li class="list-group-item">
         <span class="badge badge-pill badge-secondary">
           From</span>
-        <a href="" data-toggle="tooltip"
-          title="{{ mesg.from.emailAddress.address }}">
-          {{ mesg.from.emailAddress.name }}
-        </a>
+        <a href="{% url 'bootleg-message-new' %}?to={{ mesg.from.emailAddress.name }} <{{ mesg.from.emailAddress.address }}>">{{ mesg.from.emailAddress.name }}</a>
       </li>
       <li class="list-group-item" style="max-height:10em; overflow-y:auto">
         <span class="badge badge-pill badge-secondary">To</span>
         {% for r in mesg.toRecipients %}
-        <a href="" class="badge badge-light">{{ r.emailAddress.name }}</a>
+        <a href="{% url 'bootleg-message-new' %}?to={{ r.emailAddress.name }} <{{ r.emailAddress.address }}>">{{ r.emailAddress.name }}</a>;
         {% endfor %}
       </li>
       {% if mesg.ccRecipients %}
       <li class="list-group-item" style="max-height:10em; overflow-y:auto">
         <span class="badge badge-pill badge-secondary">Cc</span>
         {% for r in mesg.ccRecipients %}
-        <a href="" class="badge badge-light">{{ r.emailAddress.name }}</a>
+        <a href="{% url 'bootleg-message-new' %}?to={{ r.emailAddress.name }} <{{ r.emailAddress.address }}>">{{ r.emailAddress.name }}</a>; 
         {% endfor %}
       </li>
       {% endif %}
     </ul>
     <p>
     <h4 class="card-title">{{ mesg.subject }}</h4>
-    <span class="ml-auto"><em>{{ mesg.receivedDateTime|date:'f A e D d M Y' }}</em></span>
+    <span><em>{{ mesg.receivedDateTime|date:'D d M Y' }} at {{ mesg.receivedDateTime|date:'f A e' }}</em></span>
     <hr>
     {% if mesg.body.contentType == 'html' %}
     <div class="embed-responsive" style="width:100%; height:500px">
       <iframe class="embed-reponsive-item" allow
-              src="{% url 'bootleg-message-body' id=mesg.id %}"</iframe>
+              src="{% url 'bootleg-message-body' id=mesg.id %}"></iframe>
     </div>
-      {% else %}
+    {% else %}
     <div style="width:100%; max-height:500px; font-family:monospace; overflow-y:auto">
-      {{ mesg.body.content_formatted|safe|urlize }}
+      {% load url_target_blank %}
+      {{ mesg.body.content_formatted|safe|urlize|url_target_blank }}
     </div>
     {% endif %}
   </div>

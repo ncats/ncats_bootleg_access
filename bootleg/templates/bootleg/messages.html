@@ -3,18 +3,21 @@
 <div class="alert alert-info" role="alert">
   <h4 class="alert-heading">Messages
     <span class="badge badge-pill badge-light">{{ count }}</span></h4>
-  <div class="input-group mb-3">        
-    <input type="text" class="form-control" placeholder="Search"
-           aria-label="Search" aria-describedby="basic-addon2">
-    <div class="input-group-append">
-      <button class="btn btn-outline-secondary" type="button">Search</button>
-    </div>      
-  </div>
-
+  <form action="{% url 'bootleg-messages' %}" method="GET">
+    <div class="input-group mb-3">
+      <input type="text" class="form-control" placeholder="Search"
+             name="search"
+             aria-label="Search" aria-describedby="basic-addon2">
+      <div class="input-group-append">
+        <button class="btn btn-outline-secondary" id="search-btn"
+                type="submit">Search</button>
+      </div>
+    </div>
+  </form>
 </div>
 {% if messages %}
 <nav aria-label="Page navigation example">
-  <ul class="pagination">
+  <ul class="pagination d-flex">
     <li class="page-item">
       <a class="page-link" href="{% url 'bootleg-messages' %}">Latest</a>
     </li>    
@@ -24,15 +27,19 @@
     <li class="page-item">
       <a class="page-link" href="{{ nextpage }}">Older</a>
     </li>
+    <li class="page-item">&nbsp;
+    </li>
+    <li class="page-item ml-auto">
+      <a class="page-link" data-toggle="tooltip" title="Send new message"
+         href="{% url 'bootleg-message-new' %}">New</a>
+    </li>
   </ul>
 </nav>
 {% for m in messages %}
 <div class="card {% if m.importance == 'high' %}border-danger{% else %}border-dark{% endif %} mb-3" style="margin-bottom:10px">
   <div class="card-header">
-    <strong data-toggle="tooltip"
-            title="{{ m.from.emailAddress.address }}">
-      {{ m.from.emailAddress.name }}</strong>
-    <p><em>{{ m.receivedDateTime|date:'f A e D d M Y' }}</em></p>
+    <a href="{% url 'bootleg-message-new' %}?to={{ m.from.emailAddress.name }} <{{ m.from.emailAddress.address }}>">{{ m.from.emailAddress.name }}</a>
+    <p><em>{{ m.receivedDateTime|date:'D d M Y' }} at {{ m.receivedDateTime|date:'f A e' }}</em></p>
   </div>
   <div class="card-body text-dark">
     <h5 class="card-title">
@@ -62,5 +69,18 @@
   </div>
 </div>
 {% endfor %}
+<nav aria-label="Page navigation example">
+  <ul class="pagination">
+    <li class="page-item">
+      <a class="page-link" href="{% url 'bootleg-messages' %}">Latest</a>
+    </li>    
+    <li class="page-item {% if skip <= 0 %}disabled{% endif %}">
+      <a class="page-link" href="{{ prevpage }}">Newer</a>
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="{{ nextpage }}">Older</a>
+    </li>
+  </ul>
+</nav>
 {% endif %}
 {% endblock %}

@@ -54,3 +54,36 @@ def deliver_message(token, id, mesg, type='reply'):
         json=mesg, timeout=TIMEOUT
     )
     return r
+
+def deliver_message_new(token, mesg):
+    graph_client = OAuth2Session(token=token)
+    r = graph_client.post(
+        '%s/me/sendMail' % graph_url, json=mesg, timeout=TIMEOUT)
+    return r
+
+def delete_message(token, id):
+    graph_client = OAuth2Session(token=token)
+    return graph_client.delete('%s/me/messages/%s' % (graph_url, id))
+
+def search_messages(token, query, folder='Inbox', top=10, skiptoken=None):
+    graph_client = OAuth2Session(token=token)
+    query_params = {
+        '$top': top,
+        '$search': '"%s"' % query
+    }
+    if skiptoken:
+        query_params['$skiptoken'] = skiptoken
+    messages = graph_client.get('%s/me/mailFolders/%s/messages'
+                                % (graph_url, folder), params=query_params)
+    return messages.json()
+    
+def get_people(token, query=None, skip=0, top=10):
+    graph_client = OAuth2Session(token=token)
+    query_params = {
+        '$top': top,
+        '$skip': skip
+    }
+    if query:
+        query_params['$search'] = '"%s"' % query
+    return graph_client.get('%s/me/people'
+                            % graph_url, params=query_params).json()

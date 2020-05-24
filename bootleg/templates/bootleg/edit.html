@@ -25,7 +25,7 @@
      .html('<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>');
    
    $.ajax({
-     url: "{% url 'bootleg-send-message' id=mesg.id %}",
+     url: "{% url 'bootleg-api-message' id=mesg.id %}",
      dataType: "json",
      method: "POST",
      data: JSON.stringify(mesg),
@@ -38,7 +38,7 @@
          console.log('Reply FAILED: ' + xhr.status+' '+error);
          $('#message')
            .addClass('alert alert-warning alert-dismissible fade show')
-           .html('Unable to reply message! <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+           .html('Unable to reply message!');
        }
      }
    }).always(function (){

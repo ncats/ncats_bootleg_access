@@ -19,5 +19,5 @@ from bootleg import views
 
 urlpatterns = [
     url(r'', include('bootleg.urls')),
-    url(r'^admin/', admin.site.urls),
+    #url(r'^admin/', admin.site.urls),
 ]

@@ -14,12 +14,17 @@ urlpatterns = [
 
     # app content views
     path(r'calendar', views.calendar, name='bootleg-calendar'),
+    path(r'messages/new', views.message_new, name='bootleg-message-new'),
     path(r'messages/<id>', views.message, name='bootleg-message'),
     path(r'messages/<id>/body', views.message_body,
          name='bootleg-message-body'),
-    path(r'messages', views.messages, name='bootleg-messages'),
     path(r'messages/<id>/<type>', views.message_send,
          name='bootleg-message-send'),
-    path(r'send/<id>/message', views.send_message,
-         name='bootleg-send-message'),
+    path(r'messages', views.messages, name='bootleg-messages'),
+    
+    # app content api
+    path(r'api/messages/new', views.api_message_new,
+         name='bootleg-api-message-new'),
+    path(r'api/messages/<id>', views.api_message,
+         name='bootleg-api-message'),
 ]

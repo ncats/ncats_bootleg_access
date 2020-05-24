@@ -189,36 +189,61 @@ def calendar(request):
 
     return validate_request(request, show_calendar)
 
+def instrument_messages(context, messages):
+    if messages and 'value' in messages:
+        for m in messages['value']:
+            m['receivedDateTime'] = dateutil.parser.isoparse(
+                m['receivedDateTime'])
+            if not m['subject'] or m['subject'] == 0:
+                m['subject'] = '(no subject)'
+        context['messages'] = messages['value']
+    
 def messages(request):
     def show_messages(request, token, context):
-        skip = 0
-        if 'skip' in request.GET:
-            skip = int(request.GET['skip'])
         top = 10
         if 'top' in request.GET:
             top = int(request.GET['top'])
-        messages = get_messages(token, skip=skip, top=top)
-        if messages:
-            for m in messages['value']:
-                m['receivedDateTime'] = dateutil.parser.isoparse(
-                    m['receivedDateTime'])
-                if not m['subject'] or m['subject'] == 0:
-                    m['subject'] = '(no subject)'
-            context['messages'] = messages['value']
         
-        if skip - top > 0:
-            context['prevpage'] = '%s?skip=%d' % (
-                reverse('bootleg-messages'), skip-top)
-        elif skip - top == 0:
-            context['prevpage'] = reverse('bootleg-messages')
-        context['nextpage'] = '%s?skip=%d' % (
-            reverse('bootleg-messages'), skip+top)
-        context['count'] = skip+top
-        context['skip'] = skip
+        if 'search' in request.GET:
+            query = context['search_term'] = request.GET['search']
+            skip = None
+            if 'skip' in request.GET:
+                skip = request.GET['skip']
+
+            messages = search_messages(token, query,
+                                       top=top, skiptoken = skip)
+            if '@odata.nextLink' in messages:
+                for s in messages['@odata.nextLink'].split("&"):
+                    if s.startswith('$skiptoken='):
+                        context['nextpage'] = (
+                            reverse('bootleg-messages')
+                            +'?search=%s&skip=%s&top=%d' % (
+                                query, s[len('$skiptoken='):], top))
+            elif 'nextpage' in context:
+                del context['nextpage']
+            instrument_messages(context, messages)
+            return render(request, 'bootleg/search_messages.html', context)
+        else:
+            skip = 0
+            if 'skip' in request.GET:
+                skip = int(request.GET['skip'])
+            messages = get_messages(token, skip=skip, top=top)
+            instrument_messages(context, messages)
             
-        return render(request, 'bootleg/messages.html', context)
+            if skip - top > 0:
+                context['prevpage'] = '%s?skip=%d' % (
+                    reverse('bootleg-messages'), skip-top)
+            elif skip - top == 0:
+                context['prevpage'] = reverse('bootleg-messages')
+            context['nextpage'] = '%s?skip=%d' % (
+                reverse('bootleg-messages'), skip+top)
+            context['count'] = skip+top
+            context['skip'] = skip
+            
+            return render(request, 'bootleg/messages.html', context)
 
     return validate_request(request, show_messages)
+
 
 @csp_exempt
 def message(request, id):
@@ -290,6 +315,8 @@ def message_send(request, id, type):
             recipients = '%s <%s>' % (
                 mesg['from']['emailAddress']['name'], email)
             unique = set(email)
+            # don't include self in reply
+            unique.add(context['user']['email']) 
 
             cc = ''
             if type == 'replyAll':
@@ -336,6 +363,21 @@ def message_send(request, id, type):
     
     return validate_request(request, show_reply, id=id, type=type)
 
+@csrf_exempt
+def message_new(request):
+    def show_message_new(request, token, context):
+        recipients = ''
+        if 'to' in request.GET:
+            recipients = request.GET['to']
+        subject = ''
+        if 'subject' in request.GET:
+            subject = request.GET['subject']
+        context['recipients'] = recipients
+        context['subject'] = subject
+        return render(request, 'bootleg/new_message.html', context)
+    return validate_request(request, show_message_new)
+    
+
 def parse_email_addresses(str):
     import re
     addresses = []
@@ -355,33 +397,78 @@ def parse_email_addresses(str):
     return addresses
 
 @csrf_exempt
-def send_message(request, id):
+def api_message(request, id):
+    context = initialize_context(request)
+    if not context['user']['id']:
+        return HttpResponseRedirect(reverse('bootleg-home'))
+
+    token = get_token(request)
+    if request.method == 'POST': # send
+        try:
+            # we're not checking the passcode here since we don't want
+            # to interrupt the send
+            logger.debug('%s: payload... %s' % (request.path, request.body))
+            data = json.loads(request.body)
+            comment = data['comment']
+            if data['contenttype'] == 'html':
+                comment = '<p>' + '<br>'.join(comment.splitlines())
+            mesg = {
+                'message': {
+                    'toRecipients': parse_email_addresses (data['to']),
+                    'ccRecipients': parse_email_addresses (data['cc']),
+                    'subject': data['subject']
+                },
+                'comment': comment
+            }
+            logger.debug('sending...\n' + json.dumps(mesg, indent=2))
+            r = deliver_message(token, id, mesg, data['sendtype'])
+            logger.debug('status => %d' % r.status_code)
+            return HttpResponse('', status=r.status_code)
+        except:
+            traceback.print_exc(file=sys.stderr)
+            
+    elif request.method == 'DELETE':
+        try:
+            r = delete_message(token, id)
+            logger.debug('%s: delete message...%d' % (
+                request.path, r.status_code))
+            return HttpResponse('', status=r.status_code)
+        except:
+            traceback.print_exc(file=sys.stderr)
+            
+    return HttpResponse('Internal server error!', status=500)
+
+@csrf_exempt
+def api_message_new(request):
     context = initialize_context(request)
     if not context['user']['id']:
         return HttpResponseRedirect(reverse('bootleg-home'))
 
     token = get_token(request)
     try:
-        # we're not checking the passcode here since we don't want to interrupt
-        # the send
         logger.debug('%s: payload... %s' % (request.path, request.body))
         data = json.loads(request.body)
-        comment = data['comment']
-        if data['contenttype'] == 'html':
-            comment = '<p>' + '<br>'.join(comment.splitlines())
+        recipients = parse_email_addresses(data['to'])
+        cc = parse_email_addresses(data['cc'])
+        if len(recipients) == 0:
+            return HttpResponse('No recipients specifed!', status=400)
         mesg = {
             'message': {
-                'toRecipients': parse_email_addresses (data['to']),
-                'ccRecipients': parse_email_addresses (data['cc']),
-                'subject': data['subject']
+                'subject': data['subject'],
+                'body': {
+                    'contentType': data['contenttype'],
+                    'content': data['comment']
+                },
+                'toRecipients': recipients,
+                'ccRecipients': cc
             },
-            'comment': comment
+            'saveToSentItems': 'true'
         }
-        logger.debug('sending...\n' + json.dumps(mesg, indent=2))
-        r = deliver_message(token, id, mesg, data['sendtype'])
+        logger.debug('sending...\n' + json.dumps(mesg, indent=2))        
+        r = deliver_message_new(token, mesg)
         logger.debug('status => %d' % r.status_code)
-        return HttpResponse('', status=r.status_code)
+        return HttpResponse('', status=r.status_code)        
+        
     except:
         traceback.print_exc(file=sys.stderr)
-    return HttpResponse('Internal server error!', status=500)
-
+    return HttpResponse('Internal server error!', status=500)    
