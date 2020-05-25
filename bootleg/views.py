@@ -191,11 +191,14 @@ def calendar(request):
 
 def instrument_messages(context, messages):
     if messages and 'value' in messages:
+        index = 1
         for m in messages['value']:
             m['receivedDateTime'] = dateutil.parser.isoparse(
                 m['receivedDateTime'])
             if not m['subject'] or m['subject'] == 0:
                 m['subject'] = '(no subject)'
+            m['message_index'] = index
+            index += 1
         context['messages'] = messages['value']
     
 def messages(request):
@@ -355,18 +358,18 @@ def message_send(request, id, type):
                 logger.warning('Unknown send type: %s' % type)
                 type = 'reply'
                         
-            subject = mesg['subject']                    
-            if type == 'forward':
-                if subject.find('Fwd:') >= 0 or subject.find('FW:') >= 0:
-                    pass
-                else:
-                    mesg['subject'] = 'Fwd: '+subject.replace(
-                        'Re:', '').replace('RE:', '')
-            else:
-                if subject.find('Re:') >= 0 or subject.find('RE:') >= 0:
-                    pass
-                else:
-                    mesg['subject'] = 'Re: '+subject
+#            subject = mesg['subject']                    
+#            if type == 'forward':
+#                if subject.find('Fwd:') >= 0 or subject.find('FW:') >= 0:
+#                    pass
+#                else:
+#                    mesg['subject'] = 'Fwd: '+subject.replace(
+#                        'Re:', '').replace('RE:', '')
+#            else:
+#                if subject.find('Re:') >= 0 or subject.find('RE:') >= 0:
+#                    pass
+#                else:
+#                    mesg['subject'] = 'Re: '+subject
 
             context['sendtype'] = type                    
             context['torecipients'] = recipients
@@ -423,13 +426,14 @@ def api_message(request, id):
             logger.debug('%s: payload... %s' % (request.path, request.body))
             data = json.loads(request.body)
             comment = data['comment']
-            if data['contenttype'] == 'html':
-                comment = '<p>' + '<br>'.join(comment.splitlines())
+            #if data['contenttype'] == 'html':
+            comment = '<p>' + '<br>'.join(comment.splitlines())
+
             mesg = {
                 'message': {
                     'toRecipients': parse_email_addresses (data['to']),
                     'ccRecipients': parse_email_addresses (data['cc']),
-                    'subject': data['subject']
+                    #'subject': data['subject']
                 },
                 'comment': comment
             }
