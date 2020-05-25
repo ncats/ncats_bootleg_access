@@ -23,6 +23,7 @@ urlpatterns = [
     path(r'messages', views.messages, name='bootleg-messages'),
     
     # app content api
+    path(r'api/avatar', views.api_profile_photo, name='bootleg-api-avatar'),
     path(r'api/messages/new', views.api_message_new,
          name='bootleg-api-message-new'),
     path(r'api/messages/<id>', views.api_message,

@@ -491,7 +491,7 @@ def api_message_new(request):
     return HttpResponse('Internal server error!', status=500)    
 
 def api_people(request):
-    def fetch_people(request, token, context):
+    def fetch_api_people(request, token, context):
         params = {}
         if 'search' in request.GET:
             params['query'] = request.GET['search']
@@ -506,5 +506,11 @@ def api_people(request):
         except:
             traceback.print_exc(file=sys.stderr)
         return HttpResponse('Internal server error!', status=500)
-    return validate_request(request, fetch_people)
-    
+    return validate_request(request, fetch_api_people)
+
+def api_profile_photo(request):
+    def fetch_api_profile_photo(request, token, context):
+        r = get_photo(token)
+        return HttpResponse(r.content, content_type=r.headers['content-type'],
+                            status = 200)
+    return validate_request(request, fetch_api_profile_photo)
