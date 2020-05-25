@@ -2,11 +2,37 @@
 {% block scripts %}
 {{ block.super }}
 <script>
-  $(document).ready(function() {
-    $('#search-alert').on('close.bs.alert', function(){
-      window.location.href = "{%url 'bootleg-messages' %}";
-    });
-  });
+ $(document).ready(function() {
+   $('#search-alert').on('close.bs.alert', function(){
+     window.location.href = "{%url 'bootleg-messages' %}";
+   });
+
+   $("button[id^='delete-message']").on('click', function(){
+     var id = $(this).data('message-id');
+     var index = $(this).data('message-index');
+     var url = "{% url 'bootleg-api-message' id='XXX' %}".replace('XXX', id);
+     
+     console.log('deleting message...'+index+' '+url);
+     $("#progressbar-"+index)
+       .addClass('progress')
+       .html('<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="margin-right:5px; width: 100%"></div>');
+     
+     $.ajax({
+       url: url,
+       method: 'DELETE',
+       success: function(xhr, status, error){
+         // reload page with only search parameter
+         window.location.href = '{{ request.path }}'
+                              + '?search='+ '{{ request.GET.search }}';
+       },
+       error: function(xhr, status, error){
+         console.log("ERROR: code="+xhr.status+" status="+status+" "+url);
+       }
+     }).always(function() {
+       $("#progressbar-"+index).removeClass('progress').html('');
+     });
+   });
+ });
 </script>
 {% endblock %}
 {% block content %}
@@ -30,40 +56,7 @@
   </ul>
 </nav>
 {% for m in messages %}
-<div class="card {% if m.importance == 'high' %}border-danger{% else %}border-dark{% endif %} mb-3" style="margin-bottom:10px">
-  <div class="card-header">
-    <strong data-toggle="tooltip"
-            title="{{ m.from.emailAddress.address }}">
-      {{ m.from.emailAddress.name }}</strong>
-    <p><em>{{ m.receivedDateTime|date:'D d M Y' }} at {{ m.receivedDateTime|date:'f A e' }}</em></p>
-  </div>
-  <div class="card-body text-dark">
-    <h5 class="card-title">
-      <a href="{% url 'bootleg-message' id=m.id %}">{{ m.subject }}</a></h5>
-    <p class="card-text">{{ m.bodyPreview }}</p>
-  </div>
-  <div class="card-footer">
-    {% if m.hasAttachments %}
-    <span style="margin-right:5px" data-toggle="tooltip"
-          data-placement="right" title="Message has attachments">
-      <i class="fas fa-paperclip"></i>
-    </span>
-    {% endif %}
-    <a class="btn btn-outline-primary"
-       href="{% url 'bootleg-message-send' id=m.id type='reply' %}"
-       data-toggle="tooltip"
-       title="Reply to {{ m.from.emailAddress.address }}">
-      <i class="fas fa-reply"></i></a>
-    <a class="btn btn-outline-primary"
-       href="{% url 'bootleg-message-send' id=m.id type='replyAll' %}"
-       data-toggle="tooltip" title="Reply All">
-      <i class="fas fa-reply-all"></i></a>
-    <a class="btn btn-outline-primary" 
-       href="{%url 'bootleg-message-send' id=m.id type='forward' %}"
-       data-toggle="tooltip" title="Forward message">
-      <i class="fas fa-arrow-right"></i></a>
-  </div>
-</div>
+{% include 'bootleg/message_summary.html' %}
 {% endfor %}
 <nav aria-label="Page navigation example">
   <ul class="pagination">

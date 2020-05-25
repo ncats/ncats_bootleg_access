@@ -489,3 +489,22 @@ def api_message_new(request):
     except:
         traceback.print_exc(file=sys.stderr)
     return HttpResponse('Internal server error!', status=500)    
+
+def api_people(request):
+    def fetch_people(request, token, context):
+        params = {}
+        if 'search' in request.GET:
+            params['query'] = request.GET['search']
+        if 'skip' in request.GET:
+            params['skip'] = request.GET['skip']
+        if 'top' in request.GET:
+            params['top'] = request.GET['top']
+        try:
+            data = get_people(token, **params)
+            return HttpResponse(json.dumps(data, indent=2),
+                                content_type='application/json', status=200)
+        except:
+            traceback.print_exc(file=sys.stderr)
+        return HttpResponse('Internal server error!', status=500)
+    return validate_request(request, fetch_people)
+    

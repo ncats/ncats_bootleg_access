@@ -1,0 +1,40 @@
+<div class="card {% if m.importance == 'high' %}border-danger{% else %}border-dark{% endif %} mb-3" style="margin-bottom:10px">
+  <div class="card-header">
+    <strong data-toggle="tooltip"
+            title="{{ m.from.emailAddress.address }}">
+      {{ m.from.emailAddress.name }}</strong>
+    <p><em>{{ m.receivedDateTime|date:'D d M Y' }} at {{ m.receivedDateTime|date:'f A e' }}</em></p>
+  </div>
+  <div class="card-body text-dark">
+    <h5 class="card-title">
+      <a href="{% url 'bootleg-message' id=m.id %}">{{ m.subject }}</a></h5>
+    <p class="card-text">{{ m.bodyPreview }}</p>
+  </div>
+  <div class="card-footer d-flex">
+    {% if m.hasAttachments %}
+    <span style="margin-right:5px" data-toggle="tooltip"
+          data-placement="right" title="Message has attachments">
+      <i class="fas fa-paperclip"></i>
+    </span>
+    {% endif %}
+    <a class="btn btn-outline-primary" style="margin-right:5px"
+       href="{% url 'bootleg-message-send' id=m.id type='reply' %}"
+       data-toggle="tooltip"
+       title="Reply to {{ m.from.emailAddress.address }}">
+      <i class="fas fa-reply"></i></a>
+    <a class="btn btn-outline-primary" style="margin-right:5px"
+       href="{% url 'bootleg-message-send' id=m.id type='replyAll' %}"
+       data-toggle="tooltip" title="Reply All">
+      <i class="fas fa-reply-all"></i></a>
+    <a class="btn btn-outline-primary" style="margin-right:5px"
+       href="{%url 'bootleg-message-send' id=m.id type='forward' %}"
+       data-toggle="tooltip" title="Forward message">
+      <i class="fas fa-arrow-right"></i></a>
+    <div id="progressbar-{{ m.message_index }}"></div>
+    <button class="btn btn-outline-danger ml-auto"
+            id="delete-message-{{ m.message_index }}"
+            data-message-index="{{ m.message_index }}"
+            data-message-id="{{ m.id }}" data-toggle="tooltip"
+            title="Delete message"><i class="fas fa-trash"></i></button>
+  </div>
+</div>

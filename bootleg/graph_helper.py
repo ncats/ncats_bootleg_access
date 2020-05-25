@@ -85,7 +85,7 @@ def get_people(token, query=None, skip=0, top=10):
         '$skip': skip
     }
     if query:
-        query_params['$search'] = '"%s"' % query
+        query_params['$search'] = '%s' % query
     return graph_client.get('%s/me/people'
                             % graph_url, params=query_params).json()
 

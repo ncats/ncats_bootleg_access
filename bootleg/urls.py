@@ -30,4 +30,5 @@ urlpatterns = [
     path(r'api/messages/<id>/attachment/<attachment_id>',
          views.api_message_attachment_content,
          name='bootleg-api-message-attachment'),
+    path(r'api/people', views.api_people, name='bootleg-api-people'),
 ]
