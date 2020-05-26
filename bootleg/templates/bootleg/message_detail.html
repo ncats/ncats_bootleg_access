@@ -6,6 +6,23 @@
    $('#delete-message').on('click', function(){
      delete_message();
    });
+
+   {% if not mesg.isRead %}
+   // if message is not read, we mark it as read after 5s
+   setTimeout(function() {
+     $.ajax({
+       url: "{% url 'bootleg-api-message' id=mesg.id %}"+'?isread=true',
+       method: 'PATCH',
+       success: function(xhr, status, error){
+         console.log('message is read ' + '{{ mesg.id }}');
+       },
+       error: function(xhr, status, error){
+         console.log('message not read: code='+xhr.status+' status='+status
+                    +' error='+error);
+       }
+     });
+   }, 5000);
+   {% endif %}
  });
 
  function delete_message () {

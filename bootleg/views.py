@@ -452,6 +452,21 @@ def api_message(request, id):
             return HttpResponse('', status=r.status_code)
         except:
             traceback.print_exc(file=sys.stderr)
+
+    elif request.method == 'PATCH':
+        try:
+            isread = False
+            if 'isread' in request.GET and (
+                    request.GET['isread'] == 'true'
+                    or request.GET['isread'] == 'yes'):
+                isread = True
+            r = mark_message_read(token, id, isread)
+            logger.debug('marking message read=%s: %s' % (isread, id))
+            return HttpResponse(r.content,
+                                content_type=r.headers['content-type'],
+                                status=r.status_code)
+        except:
+            traceback.print_exc(file=sys.stderr)
             
     return HttpResponse('Internal server error!', status=500)
 
@@ -512,5 +527,5 @@ def api_profile_photo(request):
     def fetch_api_profile_photo(request, token, context):
         r = get_photo(token)
         return HttpResponse(r.content, content_type=r.headers['content-type'],
-                            status = 200)
+                            status = r.status_code)
     return validate_request(request, fetch_api_profile_photo)

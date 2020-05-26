@@ -66,6 +66,14 @@ def delete_message(token, id):
     graph_client = OAuth2Session(token=token)
     return graph_client.delete('%s/me/messages/%s' % (graph_url, id))
 
+def mark_message_read(token, id, isread):
+    graph_client = OAuth2Session(token=token)
+    mesg = {
+        'isRead': isread
+    }
+    return graph_client.patch('%s/me/messages/%s' % (graph_url, id),
+                              json=mesg, timeout=TIMEOUT)
+
 def search_messages(token, query, folder='Inbox', top=10, skiptoken=None):
     graph_client = OAuth2Session(token=token)
     query_params = {

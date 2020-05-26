@@ -1,5 +1,5 @@
-<div class="card {% if m.importance == 'high' %}border-danger{% else %}border-dark{% endif %} mb-3" style="margin-bottom:10px">
-  <div class="card-header">
+<div class="card border-dark mb-3" style="margin-bottom:10px">
+  <div class="card-header alert alert-{% if m.importance == 'high' %}danger{% elif not m.isRead %}success{% else %}secondary{% endif %}">
     <strong data-toggle="tooltip"
             title="{{ m.from.emailAddress.address }}">
       {{ m.from.emailAddress.name }}</strong>
@@ -12,10 +12,10 @@
   </div>
   <div class="card-footer d-flex">
     {% if m.hasAttachments %}
-    <span style="margin-right:5px" data-toggle="tooltip"
-          data-placement="right" title="Message has attachments">
+    <a class="btn btn-light disabled" style="margin-right:5px" href="#"
+       data-toggle="tooltip" title="Message has attachments">
       <i class="fas fa-paperclip"></i>
-    </span>
+    </a>
     {% endif %}
     <a class="btn btn-outline-primary" style="margin-right:5px"
        href="{% url 'bootleg-message-send' id=m.id type='reply' %}"
