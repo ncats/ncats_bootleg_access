@@ -42,7 +42,7 @@ def auth(request):
     id = context['user']['id']
     if id:
         return render(request, 'bootleg/auth.html', context)
-    return HttpResponseRedirect(reverse('bootleg-home'))        
+    return HttpResponseRedirect(reverse('bootleg-home'))
 
 def update_session_user(request, user):
     # update session user from an instance of models.User
@@ -158,7 +158,7 @@ def local_time(time):
     local_time = t.astimezone(local_zone)
     return local_time
 
-def validate_request(request, run_if_validated, **kargs):
+def validate_request(request, run_if_validated, current_path=True, **kargs):
     context = initialize_context(request)
     if not context['user']['id']:
         return HttpResponseRedirect(reverse('bootleg-home'))
@@ -168,12 +168,13 @@ def validate_request(request, run_if_validated, **kargs):
     logger.debug('%s: now=%f verified=%f => %f' % (
         request.path, now, context['user']['verified'], dif))
     if dif > DEFAULT_TIMEOUT:
-        request.session['current_path'] = request.get_full_path()
+        if current_path:
+            request.session['current_path'] = request.get_full_path()
         return HttpResponseRedirect(reverse('bootleg-auth'))
 
     token = get_token(request)
     return run_if_validated(request, token, context, **kargs)
-    
+
 def calendar(request):
     def show_calendar(request, token, context):
         events = get_calendar_events(token)
@@ -472,6 +473,7 @@ def api_message(request, id):
 
 @csrf_exempt
 def api_message_new(request):
+    # we're also not checking the passcode here either
     context = initialize_context(request)
     if not context['user']['id']:
         return HttpResponseRedirect(reverse('bootleg-home'))
@@ -521,11 +523,12 @@ def api_people(request):
         except:
             traceback.print_exc(file=sys.stderr)
         return HttpResponse('Internal server error!', status=500)
-    return validate_request(request, fetch_api_people)
+    return validate_request(request, fetch_api_people, current_path=False)
 
 def api_profile_photo(request):
     def fetch_api_profile_photo(request, token, context):
         r = get_photo(token)
         return HttpResponse(r.content, content_type=r.headers['content-type'],
                             status = r.status_code)
-    return validate_request(request, fetch_api_profile_photo)
+    return validate_request(
+        request, fetch_api_profile_photo, current_path=False)
