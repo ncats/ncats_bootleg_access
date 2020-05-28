@@ -46,7 +46,7 @@ browsing your messages.
 ![Messages](bootleg2.png)
 
 You will be required to enter the rotating one-time passcode every
-hour as you interact with the app. Dropping
+hour as you interact with the app. Drop
 [me](mailto:nguyenda@mail.nih.gov) an email if you have any problems
 setting this up!
 
