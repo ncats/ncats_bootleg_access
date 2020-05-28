@@ -19,7 +19,7 @@ python manage.py makemigrations bootleg
 python manage.py migrate
 ```
 
-Before running the code, make sure to (i) edit the files `oauth_settings_example.yml` as appropriate
+Before running the code, make sure to (i) edit the file `oauth_settings_example.yml` as appropriate
 and rename it as `oauth_settings.yml` and (ii) if necessary adjust `settings.py` for deployment other 
 than `localhost`. Please see documentations on 
 [Microsoft Graph](https://developer.microsoft.com/en-us/graph/get-started/python) for additional details.
