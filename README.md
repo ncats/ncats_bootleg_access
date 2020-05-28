@@ -29,4 +29,26 @@ python manage.py runserver
 ```
 
 Then point your browser to
-[http://localhost:8000](http://localhost:8000).
+[http://localhost:8000](http://localhost:8000) and you should see
+something like the following screenshot:
+
+![Login](bootleg1.png)
+
+Once you've successfully authenticated, you should be presented with a
+screen with an QR code as shown here:
+
+![QR code](bootleg3.png)
+
+Now you should be able to scan the QR code with your mobile phone and
+have the account added to your authenticator app. You can start
+browsing your messages.
+
+![Messages](bootleg2.png)
+
+You will be required to enter the rotating one-time passcode every
+hour as you interact with the app. Dropping
+[me](mailto:nguyenda@mail.nih.gov) an email if you have any problems
+setting this up!
+
+
+
