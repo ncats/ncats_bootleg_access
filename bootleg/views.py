@@ -5,13 +5,10 @@ from django.core import serializers
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages as flash_messages
-from csp.decorators import csp_exempt
 
 import dateutil.parser, json, logging, traceback, sys, pickle
 from dateutil import tz
 from datetime import datetime
-from PIL import Image
-from io import BytesIO
 import base64, pyotp, time
 
 from .models import User, Session
@@ -249,7 +246,6 @@ def messages(request):
     return validate_request(request, show_messages)
 
 
-@csp_exempt
 def message(request, id):
     def show_message(request, token, context, id):
         mesg = get_message(token, id)

@@ -10,8 +10,6 @@ python-dateutil
 oauthlib
 requests
 requests-oauthlib
-django-csp
-csp
 ```
 
 To build
