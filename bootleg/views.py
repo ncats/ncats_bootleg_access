@@ -18,7 +18,7 @@ from bootleg.auth_helper import *
 logger = logging.getLogger(__name__)
 
 # default timeout (in seconds) before the user has to enter the passcode
-DEFAULT_TIMEOUT = 30 #60*60
+DEFAULT_TIMEOUT = 60*60
 
 def initialize_context(request):
     context = {}
