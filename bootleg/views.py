@@ -18,7 +18,7 @@ from bootleg.auth_helper import *
 logger = logging.getLogger(__name__)
 
 # default timeout (in seconds) before the user has to enter the passcode
-DEFAULT_TIMEOUT = 60*60
+DEFAULT_TIMEOUT = 30 #60*60
 
 def initialize_context(request):
     context = {}
@@ -87,21 +87,44 @@ def verify(request):
             traceback.print_exc(file=sys.stderr)
 
     return HttpResponseRedirect(reverse('bootleg-home'))
+
+def validate_context(request, context):
+    now = time.time()
+    dif = now - context['user']['verified']
+    logger.debug('%s: now=%f verified=%f => %f' % (
+        request.path, now, context['user']['verified'], dif))
+    return dif < DEFAULT_TIMEOUT
     
+def validate_request(request, run_if_validated, current_path=True, **kargs):
+    context = initialize_context(request)
+    if not context['user']['id']:
+        return HttpResponseRedirect(reverse('bootleg-home'))
+
+    if not validate_context(request, context):
+        if current_path:
+            request.session['current_path'] = request.get_full_path()
+        return HttpResponseRedirect(reverse('bootleg-auth'))
+
+    token = get_token(request)
+    return run_if_validated(request, token, context, **kargs)
+
 def home(request):
     context = initialize_context(request)
     id = context['user']['id']
     if id:
-        try:
-            user = User.objects.get(pk=id)
-            totp = pyotp.totp.TOTP(user.secret.decode())
-            context['qr'] = totp.provisioning_uri(
+        if validate_context(request, context):
+            try:
+                user = User.objects.get(pk=id)
+                totp = pyotp.totp.TOTP(user.secret.decode())
+                context['qr'] = totp.provisioning_uri(
                     name=user.username, issuer_name='NCATS Bootleg Access')
-            #context['otp'] = totp.now()
-        except User.DoesNotExist:
-            logger.warning('%s: bogus user!' % id)
-        except:
-            traceback.print_exc(file=sys.stderr)
+                #context['otp'] = totp.now()
+            except User.DoesNotExist:
+                logger.warning('%s: bogus user!' % id)
+            except:
+                traceback.print_exc(file=sys.stderr)
+        else:
+            return HttpResponseRedirect(reverse('bootleg-auth'))
     return render(request, 'bootleg/home.html', context)
 
 def instrument(request, id):
@@ -154,23 +177,6 @@ def local_time(time):
     local_zone = tz.tzlocal()
     local_time = t.astimezone(local_zone)
     return local_time
-
-def validate_request(request, run_if_validated, current_path=True, **kargs):
-    context = initialize_context(request)
-    if not context['user']['id']:
-        return HttpResponseRedirect(reverse('bootleg-home'))
-
-    now = time.time()
-    dif = now - context['user']['verified']    
-    logger.debug('%s: now=%f verified=%f => %f' % (
-        request.path, now, context['user']['verified'], dif))
-    if dif > DEFAULT_TIMEOUT:
-        if current_path:
-            request.session['current_path'] = request.get_full_path()
-        return HttpResponseRedirect(reverse('bootleg-auth'))
-
-    token = get_token(request)
-    return run_if_validated(request, token, context, **kargs)
 
 def calendar(request):
     def show_calendar(request, token, context):
